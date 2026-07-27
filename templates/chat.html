@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>
+    PRIVATE CHAT
+</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Segoe UI, Arial, sans-serif;
+}
+
+body{
+    background:#202123;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.chat-container{
+    width:100%;
+    max-width:450px;
+    height:100vh;
+    border-radius:0;
+    background:#2b2d31;
+    border-radius:18px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    box-shadow:0 0 25px rgba(0,0,0,.45);
+}
+
+.header{
+    background:#343541;
+    color:white;
+    padding:18px;
+    border-bottom:1px solid #444654;
+}
+
+.header h2{
+    font-size:20px;
+}
+
+#status{
+    color:#8e8ea0;
+    font-size:13px;
+    margin-top:5px;
+}
+
+#receiver{
+    width:100%;
+    margin-top:12px;
+    padding:12px;
+    border:none;
+    outline:none;
+    border-radius:10px;
+    background:#40414f;
+    color:white;
+}
+
+.messages{
+    flex:1;
+    overflow-y:auto;
+    padding:18px;
+    background:#202123;
+}
+
+.messages::-webkit-scrollbar{
+    width:6px;
+}
+
+.messages::-webkit-scrollbar-thumb{
+    background:#555;
+    border-radius:10px;
+}
+
+.me{
+    margin-left:auto;
+    margin-bottom:12px;
+    background:#10a37f;
+    color:white;
+    padding:12px 15px;
+    border-radius:18px 18px 4px 18px;
+    width:max-content;
+    max-width:75%;
+    word-wrap:break-word;
+}
+
+.other{
+    margin-bottom:12px;
+    background:#444654;
+    color:white;
+    padding:12px 15px;
+    border-radius:18px 18px 18px 4px;
+    width:max-content;
+    max-width:75%;
+    word-wrap:break-word;
+}
+
+.footer{
+    display:flex;
+    gap:10px;
+    padding:15px;
+    background:#343541;
+    border-top:1px solid #444654;
+}
+
+.footer input{
+    flex:1;
+    padding:13px;
+    border:none;
+    outline:none;
+    border-radius:12px;
+    background:#40414f;
+    color:white;
+}
+
+.footer button{
+    width:90px;
+    border:none;
+    border-radius:12px;
+    background:#10a37f;
+    color:white;
+    cursor:pointer;
+    font-weight:bold;
+    transition:.2s;
+}
+
+.footer button:hover{
+    background:#0d8c6d;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="chat-container">
+
+<div class="header">
+
+<h2 id="username"></h2>
+
+<div id="status">😍 Online</div>
+
+
+</div>
+
+<div
+id="messages"
+class="messages">
+
+</div>
+
+<div class="footer">
+
+<input
+id="message"
+placeholder="Eathana solalam aa..">
+
+<button
+onclick="sendMessage()">
+
+Send
+
+</button>
+
+</div>
+
+</div>
+
+<script>
+
+const username = localStorage.getItem("username") || "Guest";
+const receiver = username === "Deva" ? "Kee" : "Deva";
+
+document.getElementById("username").innerText = receiver;
+
+const status = document.getElementById("status");
+const messages = document.getElementById("messages");
+
+const message = document.getElementById("message");
+
+const ws = new WebSocket("ws://127.0.0.1:8000/ws/" + username);
+ws.onopen = function () {
+    loadHistory();
+};
+
+let typingTimer = null;
+
+
+ws.onmessage = function(event){
+
+    const data = JSON.parse(event.data);
+
+    switch(data.type){
+
+        case "online":
+
+            if(receiver !== "" && data.users.includes(receiver)){
+                status.innerHTML = "😍 Online";
+            }else{
+                status.innerHTML = "❤️ Give missed call";
+            }
+
+            break;
+
+
+        case "typing":
+
+            status.innerHTML = "✍️ My Love...";
+
+            clearTimeout(typingTimer);
+
+            typingTimer = setTimeout(function(){
+
+                if(receiver !== "")
+                    status.innerHTML = "😍 Online";
+
+            },1500);
+
+            break;
+
+
+        case "message":
+
+            messages.innerHTML += `
+                <div class="other">
+                    ${data.message}
+
+                    <div style="
+                        display:flex;
+                        justify-content:flex-end;
+                        font-size:11px;
+                        margin-top:6px;
+                        color:#bdbdbd;
+                    ">
+                        ${data.time}
+                    </div>
+                </div>
+            `;
+
+            ws.send(JSON.stringify({
+
+                type:"seen",
+
+                to:data.from
+
+            }));
+
+            break;
+
+
+        case "delivered":
+
+            document.querySelectorAll(".tick").forEach(function(x){
+
+                x.innerHTML="✓✓";
+
+            });
+
+            break;
+
+
+        case "seen":
+
+            document.querySelectorAll(".tick").forEach(function(x){
+
+                x.style.color="#4FC3F7";
+
+            });
+
+            break;
+
+    }
+
+    messages.scrollTop = messages.scrollHeight;
+
+};
+
+
+async function loadHistory(){
+
+    if(receiver === "")
+    return;
+
+    messages.innerHTML="";
+
+    const response = await fetch(
+        `/history/${username}/${receiver}`
+    );
+
+    const chats = await response.json();
+
+    chats.forEach(chat=>{
+
+        if(chat.sender===username){
+
+            messages.innerHTML += `
+                <div class="me">
+
+                    ${chat.message}
+
+                    <div style="
+                        display:flex;
+                        justify-content:flex-end;
+                        font-size:11px;
+                        margin-top:6px;
+                        color:#ddd;
+                    ">
+                        ${chat.time}
+                    </div>
+
+                </div>
+            `;
+
+        }
+
+        else{
+
+            messages.innerHTML += `
+                <div class="other">
+
+                    ${chat.message}
+
+                    <div style="
+                        display:flex;
+                        justify-content:flex-end;
+                        font-size:11px;
+                        margin-top:6px;
+                        color:#bdbdbd;
+                    ">
+                        ${chat.time}
+                    </div>
+
+                </div>
+            `;
+
+        }
+
+    });
+
+    messages.scrollTop = messages.scrollHeight;
+
+}
+
+
+function sendMessage(){
+
+    if(receiver === "" || message.value === "")
+    return;
+
+    ws.send(JSON.stringify({
+
+        type:"message",
+
+        to:receiver,
+
+        message:message.value
+
+    }));
+
+
+    messages.innerHTML += `
+        <div class="me">
+
+            ${message.value}
+
+            <div style="
+                display:flex;
+                justify-content:flex-end;
+                align-items:center;
+                font-size:11px;
+                margin-top:6px;
+                color:#ddd;
+            ">
+
+                <span>
+                    ${new Date().toLocaleTimeString([],{
+                        hour:"2-digit",
+                        minute:"2-digit"
+                    })}
+                </span>
+
+                <span class="tick" style="margin-left:6px;">
+                    ✓
+                </span>
+
+            </div>
+
+        </div>
+    `;
+
+    message.value="";
+
+    messages.scrollTop = messages.scrollHeight;
+
+}
+
+
+message.addEventListener("input",function(){
+
+    if(receiver ==="")
+        return;
+
+    ws.send(JSON.stringify({
+
+        type:"typing",
+
+        to:receiver
+
+    }));
+
+});
+
+</script>
+</body>
+</html>
