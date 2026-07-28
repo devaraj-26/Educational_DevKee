@@ -187,7 +187,11 @@ const messages = document.getElementById("messages");
 
 const message = document.getElementById("message");
 
-const ws = new WebSocket("ws://127.0.0.1:8000/ws/" + username);
+const protocol = location.protocol === "https:" ? "wss" : "ws";
+
+const ws = new WebSocket(
+    protocol + "://" + location.host + "/ws/" + username
+);
 ws.onopen = function () {
 
     loadHistory();
