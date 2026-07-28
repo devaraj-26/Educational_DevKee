@@ -59,6 +59,14 @@ async def websocket_endpoint(websocket: WebSocket, username: str):
                     receiver=username
                 )
 
+            # ---------------- Last Seen ----------------
+            elif msg_type == "last_seen":
+
+                await manager.send_last_seen(
+                    requester=username,
+                    target=data["to"]
+                )
+
     except WebSocketDisconnect:
 
         await manager.disconnect(username)

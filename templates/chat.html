@@ -189,7 +189,14 @@ const message = document.getElementById("message");
 
 const ws = new WebSocket("ws://127.0.0.1:8000/ws/" + username);
 ws.onopen = function () {
+
     loadHistory();
+
+    ws.send(JSON.stringify({
+        type:"last_seen",
+        to:receiver
+    }));
+
 };
 
 let typingTimer = null;
