@@ -7,6 +7,7 @@ class ConnectionManager:
     def __init__(self):
         self.connections = {}
         self.online_users = set()
+        self.last_seen = {}
 
     async def connect(self, username: str, websocket: WebSocket):
         await websocket.accept()
@@ -23,6 +24,8 @@ class ConnectionManager:
 
         if username in self.online_users:
             self.online_users.remove(username)
+
+        self.last_seen[username] = datetime.now().strftime("%I:%M %p")
 
         await self.broadcast_online_users()
 
@@ -82,6 +85,30 @@ class ConnectionManager:
             await self.connections[sender].send_json({
                 "type": "seen"
             })
+
+    async def send_last_seen(
+        self,
+        requester,
+        target
+    ):
+
+        if requester in self.connections:
+
+            if target in self.online_users:
+
+                await self.connections[requester].send_json({
+                    "type": "last_seen",
+                    "status": "😍 Online"
+                })
+
+            else:
+
+                last = self.last_seen.get(target, "Unknown")
+
+                await self.connections[requester].send_json({
+                    "type": "last_seen",
+                    "status": f"Last seen {last}"
+                })
 
 
 manager = ConnectionManager()
