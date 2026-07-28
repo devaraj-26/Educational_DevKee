@@ -107,7 +107,7 @@ class ConnectionManager:
 
                 await self.connections[requester].send_json({
                     "type": "last_seen",
-                    "status": f"Last seen {last}"
+                    "status": f"❤️ Give missed call • {last}"
                 })
 
 

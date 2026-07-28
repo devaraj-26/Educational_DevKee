@@ -201,7 +201,6 @@ ws.onopen = function () {
 
 let typingTimer = null;
 
-
 ws.onmessage = function(event){
 
     const data = JSON.parse(event.data);
@@ -210,14 +209,24 @@ ws.onmessage = function(event){
 
         case "online":
 
-            if(receiver !== "" && data.users.includes(receiver)){
+            if(data.users.includes(receiver)){
                 status.innerHTML = "😍 Online";
             }else{
-                status.innerHTML = "❤️ Give missed call";
+
+                ws.send(JSON.stringify({
+                    type:"last_seen",
+                    to:receiver
+                }));
+
             }
 
             break;
 
+        case "last_seen":
+
+            status.innerHTML = data.status;
+
+            break;
 
         case "typing":
 
@@ -227,30 +236,32 @@ ws.onmessage = function(event){
 
             typingTimer = setTimeout(function(){
 
-                if(receiver !== "")
-                    status.innerHTML = "😍 Online";
+                ws.send(JSON.stringify({
+                    type:"last_seen",
+                    to:receiver
+                }));
 
             },1500);
 
             break;
 
-
         case "message":
 
             messages.innerHTML += `
-                <div class="other">
-                    ${data.message}
+            <div class="other">
 
-                    <div style="
-                        display:flex;
-                        justify-content:flex-end;
-                        font-size:11px;
-                        margin-top:6px;
-                        color:#bdbdbd;
-                    ">
-                        ${data.time}
-                    </div>
+                ${data.message}
+
+                <div style="
+                    text-align:right;
+                    font-size:11px;
+                    margin-top:6px;
+                    color:#bdbdbd;
+                ">
+                    ${data.time}
                 </div>
+
+            </div>
             `;
 
             ws.send(JSON.stringify({
@@ -263,7 +274,6 @@ ws.onmessage = function(event){
 
             break;
 
-
         case "delivered":
 
             document.querySelectorAll(".tick").forEach(function(x){
@@ -273,7 +283,6 @@ ws.onmessage = function(event){
             });
 
             break;
-
 
         case "seen":
 
@@ -290,7 +299,6 @@ ws.onmessage = function(event){
     messages.scrollTop = messages.scrollHeight;
 
 };
-
 
 async function loadHistory(){
 
