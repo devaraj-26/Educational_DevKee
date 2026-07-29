@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import JSONResponse
 from app.models import Message
 from sqlalchemy.orm import Session
-
+from zoneinfo import ZoneInfo
 from app.database import engine, Base, get_db
 from app.models import User
 from app.auth import hash_password, verify_password
@@ -117,12 +117,14 @@ async def history(user1: str, user2: str, db: Session = Depends(get_db)):
     ).order_by(Message.id).all()
 
     return JSONResponse([
-        {
+         {
             "sender": c.sender,
             "receiver": c.receiver,
             "message": c.message,
             "status": c.status,
-            "time": str(c.created_at)
+            "time": c.created_at.astimezone(
+                ZoneInfo("Asia/Kolkata")
+            ).strftime("%I:%M %p")
         }
         for c in chats
     ])
