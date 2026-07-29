@@ -25,7 +25,15 @@ class ConnectionManager:
         if username in self.online_users:
             self.online_users.remove(username)
 
-        self.last_seen[username] = datetime.now().strftime("%I:%M %p")
+        db = SessionLocal()
+
+        user = db.query(User).filter(User.username == username).first()
+
+        if user:
+            user.last_seen = datetime.utcnow()
+            db.commit()
+
+        db.close()
 
         await self.broadcast_online_users()
 
@@ -103,12 +111,23 @@ class ConnectionManager:
 
             else:
 
-                last = self.last_seen.get(target, "Unknown")
+                else:
 
-                await self.connections[requester].send_json({
-                    "type": "last_seen",
-                    "status": f"❤️ Give missed call • {last}"
-                })
+    last = self.last_seen.get(target)
+
+    if last:
+        last = last.replace(
+            tzinfo=timezone.utc
+        ).astimezone(
+            ZoneInfo("Asia/Kolkata")
+        ).strftime("%I:%M %p")
+    else:
+        last = "Unknown"
+
+    await self.connections[requester].send_json({
+        "type": "last_seen",
+        "status": f"❤️ Give missed call • {last}"
+    })
 
 
 manager = ConnectionManager()

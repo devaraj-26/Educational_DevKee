@@ -8,17 +8,17 @@ last_seen = Column(
     default=datetime.utcnow
 )
 
+from sqlalchemy import DateTime
+from datetime import datetime
+
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, nullable=False)
-    password = Column(String, nullable=False)
+    id = Column(Integer, primary_key=True)
+    username = Column(String, unique=True)
+    password = Column(String)
 
-    last_seen = Column(
-        DateTime,
-        default=datetime.utcnow
-    )
+    last_seen = Column(DateTime, default=datetime.utcnow)
 
 
 class Message(Base):

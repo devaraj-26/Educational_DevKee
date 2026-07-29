@@ -2,12 +2,15 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>
     PRIVATE CHAT
 </title>
 
 <style>
-
+input{
+    font-size:16px;
+}
 *{
     margin:0;
     padding:0;
@@ -25,8 +28,10 @@ body{
 
 .chat-container{
     width:100%;
-    max-width:450px;
     height:100vh;
+    max-width:480px;
+    height:100dvh;
+    margin:auto;
     border-radius:0;
     background:#2b2d31;
     border-radius:18px;
@@ -213,19 +218,20 @@ ws.onmessage = function(event){
 
         case "online":
 
-            if(data.users.includes(receiver)){
+            if (data.users.includes(receiver)) {
+
                 status.innerHTML = "😍 Online";
-            }else{
 
-                ws.send(JSON.stringify({
-                    type:"last_seen",
-                    to:receiver
-                }));
+        } else {
 
-            }
+            ws.send(JSON.stringify({
+                type: "last_seen",
+                to: receiver
+            }));
 
-            break;
+        }
 
+        break;
         case "last_seen":
 
             status.innerHTML = data.status;

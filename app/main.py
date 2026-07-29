@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from app.models import Message
 from sqlalchemy.orm import Session
 from zoneinfo import ZoneInfo
+from datetime import timezone
 from app.database import engine, Base, get_db
 from app.models import User
 from app.auth import hash_password, verify_password
@@ -122,7 +123,9 @@ async def history(user1: str, user2: str, db: Session = Depends(get_db)):
             "receiver": c.receiver,
             "message": c.message,
             "status": c.status,
-            "time": c.created_at.astimezone(
+            "time": c.created_at.replace(
+                tzinfo=timezone.utc
+            ).astimezone(
                 ZoneInfo("Asia/Kolkata")
             ).strftime("%I:%M %p")
         }
